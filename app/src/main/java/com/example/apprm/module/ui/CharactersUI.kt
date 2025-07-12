@@ -1,5 +1,6 @@
 package com.example.apprm.module.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.apprm.R
 import com.example.apprm.databinding.ViewCharactersBinding
 import com.example.apprm.module.apiService.ClientApi
+import com.example.apprm.module.db.AppDatabase
 import com.example.apprm.module.db.repository.CharacterRepository
 import com.example.apprm.module.ui.adapters.CharacterAdapter
 import com.example.apprm.module.viewModel.CharacterViewModel
@@ -35,22 +37,40 @@ class CharactersUI : AppCompatActivity() {
         binding = ViewCharactersBinding.inflate(layoutInflater) // Inflar el layout
         setContentView(binding.root) // Establecer la vista raíz
 
-        setContentView(binding.root) // Establece la vista raíz de tu actividad
-
         setupRecyclerView()
         setupSpinners() // Configurar los Spinners
         setupListeners() // Configurar los listeners para botones
 
-        // Inicializar el ViewModel usando la Factory, inyectando el repositorio
-        val repository = CharacterRepository(ClientApi.apiService)
+        // --- INICIALIZACIÓN DEL REPOSITORIO CON DAO ---
+
+        // 1. Obtener la instancia del ApiService (ya existente)
+        val apiService = ClientApi.apiService
+
+        // 2. Obtener la instancia del FavoriteCharacterDao de la base de datos Room
+        // Se usa applicationContext para evitar posibles memory leaks si usáramos 'this'
+        val favoriteCharacterDao = AppDatabase.getDatabase(applicationContext).favoriteCharacterDao()
+
+        // 3. Instanciar CharacterRepository pasando apiService y favoriteCharacterDao
+        val repository = CharacterRepository(apiService, favoriteCharacterDao)
+
+        // 4. Instanciar la Factory del ViewModel con el nuevo repositorio
         val factory = CharacterFactory(repository)
         viewModel = ViewModelProvider(this, factory).get(CharacterViewModel::class.java)
+        // --- FIN INICIALIZACIÓN DEL REPOSITORIO ---
 
         observeViewModel() // Empieza a observar los LiveData del ViewModel
     }
 
     private fun setupRecyclerView() {
-        characterAdapter = CharacterAdapter()
+        // Pasa una lambda al adaptador para manejar el clic en el elemento
+        characterAdapter = CharacterAdapter { character ->
+            // Cuando se hace clic en un personaje, iniciamos CharacterDetailActivity
+            val intent = Intent(this, CharacterDetailUI::class.java).apply {
+                // Pasamos el ID del personaje a la nueva actividad
+                putExtra("CHARACTER_ID", character.id)
+            }
+            startActivity(intent)
+        }
         binding.recyclerViewCharacters.apply {
             layoutManager = LinearLayoutManager(this@CharactersUI)
             adapter = characterAdapter

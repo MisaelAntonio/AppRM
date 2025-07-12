@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-kapt") // Necesario para el procesador de anotaciones de Roo
 }
 
 android {
@@ -72,6 +73,18 @@ dependencies {
     // Constraints Layout
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
+    // Room
+    implementation("androidx.room:room-runtime:2.6.1")
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    // Para Kotlin, usa kapt en lugar de annotationProcessor
+    kapt("androidx.room:room-compiler:2.6.1")
+    // Soporte para Corrutinas de Room (opcional pero muy recomendado para operaciones asíncronas)
+    implementation("androidx.room:room-ktx:2.6.1")
+
+    // Google Maps SDK
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    // Para geocodificación (opcional, si quieres convertir nombres a coordenadas)
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

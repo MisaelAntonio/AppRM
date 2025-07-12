@@ -9,11 +9,12 @@ import com.bumptech.glide.Glide // Para cargar imágenes
 import com.example.apprm.databinding.ItemCharacterBinding
 import com.example.apprm.module.db.model.Character
 
-class CharacterAdapter : ListAdapter<Character, CharacterAdapter.CharacterViewHolder>(CharacterDiffCallback()) {
+class CharacterAdapter(private val onItemClick: (Character) -> Unit)
+    : ListAdapter<Character, CharacterAdapter.CharacterViewHolder>(CharacterDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CharacterViewHolder {
         val binding = ItemCharacterBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return CharacterViewHolder(binding)
+        return CharacterViewHolder(binding, onItemClick) // Pasa el listener al ViewHolder
     }
 
     override fun onBindViewHolder(holder: CharacterViewHolder, position: Int) {
@@ -21,7 +22,11 @@ class CharacterAdapter : ListAdapter<Character, CharacterAdapter.CharacterViewHo
         holder.bind(character)
     }
 
-    class CharacterViewHolder(private val binding: ItemCharacterBinding) : RecyclerView.ViewHolder(binding.root) {
+    class CharacterViewHolder(
+        private val binding: ItemCharacterBinding,
+        private val onItemClick: (Character) -> Unit // El ViewHolder también recibe el listener
+    ) : RecyclerView.ViewHolder(binding.root) { // binding.root se refiere a la vista completa del item_character
+
         fun bind(character: Character) {
             binding.apply {
                 textViewName.text = character.name
@@ -33,6 +38,11 @@ class CharacterAdapter : ListAdapter<Character, CharacterAdapter.CharacterViewHo
                     .load(character.image)
                     .circleCrop() // O .centerCrop(), .fitCenter()
                     .into(imageViewCharacter)
+
+                // Configura el listener de clic para toda la vista del item
+                root.setOnClickListener {
+                    onItemClick(character) // Llama a la lambda pasada en el constructor
+                }
             }
         }
     }

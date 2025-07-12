@@ -36,4 +36,4 @@ data class Character(
 data class Location(
     val name: String,
     val url: String
-)
+) : java.io.Serializable
