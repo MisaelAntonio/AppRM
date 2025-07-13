@@ -59,6 +59,13 @@ class CharactersUI : AppCompatActivity() {
         // --- FIN INICIALIZACIÓN DEL REPOSITORIO ---
 
         observeViewModel() // Empieza a observar los LiveData del ViewModel
+
+        // *** NUEVO OnClickListener para el botón "Mis Favoritos" ***
+        binding.buttonMyFavorites.setOnClickListener {
+            val intent = Intent(this, FavoriteCharactersUI::class.java)
+            startActivity(intent)
+        }
+        // *** FIN NUEVO OnClickListener ***
     }
 
     private fun setupRecyclerView() {

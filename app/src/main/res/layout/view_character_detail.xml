@@ -113,13 +113,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="16dp"
                 android:text="Ver en Mapa"
-                android:visibility="gone" /> <TextView
-            android:id="@+id/textViewDetailEpisodeCount"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:textSize="16sp"
-            tools:text="Appears in: 51 episodes" />
+                android:visibility="gone" />
 
             <TextView
                 android:layout_width="match_parent"

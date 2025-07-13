@@ -12,6 +12,7 @@ import retrofit2.Response
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope // Importar coroutineScope para lanzamientos paralelos
+import kotlinx.coroutines.flow.Flow
 
 class CharacterRepository(
     private val apiService: ApiService,
@@ -52,7 +53,9 @@ class CharacterRepository(
         return favoriteCharacterDao.getFavoriteById(characterId)
     }
 
-    fun getAllFavoriteCharacters() = favoriteCharacterDao.getAllFavorites()
+    fun getAllFavoriteCharacters(): Flow<List<FavoriteCharacter>> {
+        return favoriteCharacterDao.getAllFavorites()
+    }
 
     //  OBTENER  LISTA DE EPISODIOS POR SUS URLs
     suspend fun getEpisodesByUrls(episodeUrls: List<String>): List<Episode> = coroutineScope {
