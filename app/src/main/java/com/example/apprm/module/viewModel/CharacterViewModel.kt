@@ -91,19 +91,19 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
                     _characters.value = newCharacters
                     nextCharactersPageUrl = characterResponse?.info?.next // Guardar la URL de la siguiente página
 
-                    Log.d(TAG, "Fetched characters: ${newCharacters.size} with filters: name=${currentNameFilter}, status=${currentStatusFilter}, species=${currentSpeciesFilter}. Next URL: ${nextCharactersPageUrl}")
+                  //  Log.d(TAG, "Fetched characters: ${newCharacters.size} with filters: name=${currentNameFilter}, status=${currentStatusFilter}, species=${currentSpeciesFilter}. Next URL: ${nextCharactersPageUrl}")
                 } else {
                     val errorBody = response.errorBody()?.string()
                     val errorMessage = "Error al cargar personajes: ${response.code()} - $errorBody"
                     _errorMessage.value = errorMessage
                     _characters.value = emptyList()
-                    Log.e(TAG, errorMessage)
+                   // Log.e(TAG, errorMessage)
                 }
             } catch (e: Exception) {
                 val errorMessage = "Excepción al cargar personajes: ${e.localizedMessage ?: "Error desconocido"}"
                 _errorMessage.value = errorMessage
                 _characters.value = emptyList()
-                Log.e(TAG, errorMessage, e)
+             //   Log.e(TAG, errorMessage, e)
             } finally {
                 _isLoading.value = false
             }
@@ -117,7 +117,7 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
     fun loadMoreCharacters() {
         // No cargar más si ya está cargando o si no hay una URL para la siguiente página
         if (_isLoading.value == true || nextCharactersPageUrl == null) {
-            Log.d(TAG, "Not loading more: isLoading=${_isLoading.value}, nextCharactersPageUrl=${nextCharactersPageUrl}")
+          //  Log.d(TAG, "Not loading more: isLoading=${_isLoading.value}, nextCharactersPageUrl=${nextCharactersPageUrl}")
             return
         }
 
@@ -139,17 +139,17 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
 
                     nextCharactersPageUrl = characterResponse?.info?.next // Actualizar la URL de la siguiente página
 
-                    Log.d(TAG, "Loaded more characters: ${newCharacters.size}. Total: ${currentList.size}. Next URL: ${nextCharactersPageUrl}")
+                    //Log.d(TAG, "Loaded more characters: ${newCharacters.size}. Total: ${currentList.size}. Next URL: ${nextCharactersPageUrl}")
                 } else {
                     val errorBody = response.errorBody()?.string()
                     val errorMessage = "Error al cargar más personajes: ${response.code()} - $errorBody"
                     _errorMessage.value = errorMessage
-                    Log.e(TAG, errorMessage)
+                  //  Log.e(TAG, errorMessage)
                 }
             } catch (e: Exception) {
                 val errorMessage = "Excepción al cargar más personajes: ${e.localizedMessage ?: "Error desconocido"}"
                 _errorMessage.value = errorMessage
-                Log.e(TAG, errorMessage, e)
+              //  Log.e(TAG, errorMessage, e)
             } finally {
                 _isLoading.value = false
             }
@@ -208,26 +208,26 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
                     _characters.value = searchResults
                     nextCharactersPageUrl = characterResponse?.info?.next // Guardar la URL de la siguiente página
 
-                    Log.d(TAG, "Search results for name='${currentNameFilter}', status='${currentStatusFilter}', species='${currentSpeciesFilter}': ${searchResults.size}. Next URL: ${nextCharactersPageUrl}")
+                //    Log.d(TAG, "Search results for name='${currentNameFilter}', status='${currentStatusFilter}', species='${currentSpeciesFilter}': ${searchResults.size}. Next URL: ${nextCharactersPageUrl}")
                 } else {
                     if (response.code() == 404) {
                         _characters.value = emptyList()
                         _errorMessage.value = "No se encontraron personajes con los filtros aplicados."
                         nextCharactersPageUrl = null // No hay más páginas
-                        Log.d(TAG, "No characters found for current filters.")
+                    //    Log.d(TAG, "No characters found for current filters.")
                     } else {
                         val errorBody = response.errorBody()?.string()
                         val errorMessage = "Error en la búsqueda/filtro: ${response.code()} - $errorBody"
                         _errorMessage.value = errorMessage
                         _characters.value = emptyList()
-                        Log.e(TAG, errorMessage)
+                       // Log.e(TAG, errorMessage)
                     }
                 }
             } catch (e: Exception) {
                 val errorMessage = "Excepción en la búsqueda/filtro: ${e.localizedMessage ?: "Error desconocido"}"
                 _errorMessage.value = errorMessage
                 _characters.value = emptyList()
-                Log.e(TAG, errorMessage, e)
+             //   Log.e(TAG, errorMessage, e)
             } finally {
                 _isLoading.value = false
             }
