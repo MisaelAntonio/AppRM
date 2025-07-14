@@ -19,24 +19,35 @@ class CharacterRepository(
     private val favoriteCharacterDao: FavoriteCharacterDao // Añadir el DAO al constructor
 ) {
 
-
-
-    // ... (métodos existentes: getAllCharacters, getCharacterById, getCharactersByPage, searchCharacters)
-
-    suspend fun getAllCharacters(): Response<CharacterResponse> {
-        return apiService.getAllCharacters()
+    // *** CAMBIO AQUÍ: Ahora devuelve Response<CharacterResponse> ***
+    suspend fun getCharacters(
+        page: Int,
+        name: String? = null,
+        status: String? = null,
+        species: String? = null
+    ): Response<CharacterResponse> { // <--- Return type changed
+        return apiService.getCharacters(page, name, status, species)
     }
+
+    // método searchCharacters separado, también debería devolver CharacterResponse
+    /*
+    suspend fun searchCharacters(
+        name: String,
+        page: Int,
+        status: String? = null,
+        species: String? = null
+    ): Response<CharacterResponse> { // <--- Return type changed
+        return apiService.searchCharacters(name, page, status, species)
+    }
+    */
 
     suspend fun getCharacterById(characterId: Int): Response<Character> {
         return apiService.getCharacterById(characterId)
     }
 
-    suspend fun searchCharacters(
-        name: String?,
-        status: String?,
-        species: String?
-    ): Response<CharacterResponse> {
-        return apiService.searchCharacters(name, status, species)
+    // MÉTODO PARA CONSUMIR LA URL COMPLETA DE LA SIGUIENTE PÁGINA
+    suspend fun getCharactersByFullUrl(url: String): Response<CharacterResponse> {
+        return apiService.getCharactersByUrl(url)
     }
 
     // --- Métodos para la base de datos Room ---

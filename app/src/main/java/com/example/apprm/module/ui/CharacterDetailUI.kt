@@ -31,7 +31,7 @@ class CharacterDetailUI : AppCompatActivity() {
         setContentView(binding.root)
 
         // 1. Obtener el ID del personaje del Intent
-        val characterId = intent.getIntExtra("CHARACTER_ID", -1)
+        val characterId = intent.getIntExtra("character_id", -1)
         if (characterId == -1) {
             Toast.makeText(this, "Error: ID de personaje no encontrado.", Toast.LENGTH_SHORT).show()
             finish() // Cierra la actividad si no hay ID válido

@@ -88,7 +88,10 @@ dependencies {
 
     implementation("androidx.biometric:biometric:1.1.0")
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+// Testing
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")  // Para testing de coroutines
+    testImplementation("androidx.arch.core:core-testing:2.2.0")  // Para LiveData testing
+    testImplementation("com.google.truth:truth:1.1.5")
 }

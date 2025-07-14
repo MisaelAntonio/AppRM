@@ -13,21 +13,28 @@ import retrofit2.http.Url
 interface ApiService {
 
     @GET(CHARACTER)
-    suspend fun getAllCharacters(): Response<CharacterResponse>
+    suspend fun getCharacters(
+        @Query("page") page: Int,
+        @Query("name") name: String? = null, // Añadido
+        @Query("status") status: String? = null, // Añadido
+        @Query("species") species: String? = null // Añadido
+    ): Response<CharacterResponse>
+
+    // searchCharacters puede ser consolidado o mantener su propia lógica si hay diferencias.
+    // Por ahora, lo mantenemos separado pero con los mismos filtros.
+    @GET(CHARACTER)
+    suspend fun searchCharacters(
+        @Query("name") name: String?, // Este ya estaba
+        @Query("status") status: String? , // Añadido
+        @Query("species") species: String? // Añadido
+    ): Response<CharacterResponse>
+
+    // CONSUMIR URL COMPLETA
+    @GET
+    suspend fun getCharactersByUrl(@Url url: String): Response<CharacterResponse>
 
     @GET(CHARACTER_BY_ID)
     suspend fun getCharacterById(@Path("id") characterId: Int): Response<Character>
-
-    @GET(CHARACTER)
-    suspend fun getCharacterByIds(@Path("id") characterId: List<Int>): Response<Character>
-
-    // Puedes añadir más endpoints según la API de Rick y Morty, por ejemplo, para filtrar:
-    @GET("character")
-    suspend fun searchCharacters(
-        @Query("name") name: String?,
-        @Query("status") status: String?,
-        @Query("species") species: String?
-    ): Response<CharacterResponse>
 
     // *** OBTENER UN EPISODIO POR SU URL COMPLETA
     @GET

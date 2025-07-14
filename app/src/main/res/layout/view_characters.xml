@@ -1,126 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".module.ui.CharactersUI">
 
-    <LinearLayout
-        android:id="@+id/filter_section"
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@color/cardview_shadow_start_color"
+        android:iconifiedByDefault="false"
+        android:queryHint="Buscar nombre personaje..."
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/filterLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:gravity="center_vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/searchView">
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textInputLayoutName"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
+            android:id="@+id/textInputLayoutStatus"
+            style="@style/Widget.Material3.TextInputLayout.FilledBox.ExposedDropdownMenu"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:hint="Buscar por nombre"
-            app:endIconMode="clear_text">
+            android:layout_weight="1"
+            android:hint="Estado"
+            android:layout_marginEnd="4dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editTextName"
+            <AutoCompleteTextView
+                android:id="@+id/autoCompleteTextViewStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName" />
+                android:inputType="none"
+                android:focusable="false"
+                android:cursorVisible="false"/>
+
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayoutSpecies"
+            style="@style/Widget.Material3.TextInputLayout.FilledBox.ExposedDropdownMenu"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
-            android:weightSum="2">
+            android:layout_weight="1"
+            android:hint="Especie"
+            android:layout_marginStart="4dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/textInputLayoutStatus"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:hint="Estado">
-
-                <AutoCompleteTextView
-                    android:id="@+id/autoCompleteTextViewStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/textInputLayoutSpecies"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:hint="Especie">
-
-                <AutoCompleteTextView
-                    android:id="@+id/autoCompleteTextViewSpecies"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
-            android:weightSum="2">
-
-            <Button
-                android:id="@+id/buttonApplyFilters"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:text="Aplicar Filtros" />
-
-            <Button
-                android:id="@+id/buttonClearFilters"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:text="Limpiar Filtros"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
-            android:weightSum="2">
-
-            <Button
-                android:id="@+id/buttonMyFavorites"
+            <AutoCompleteTextView
+                android:id="@+id/autoCompleteTextViewSpecies"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:text="Mis Favoritos"/>
+                android:inputType="none"
+                android:focusable="false"
+                android:cursorVisible="false"/>
 
-        </LinearLayout>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ImageButton
+            android:id="@+id/resetFiltersButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Restablecer Filtros"
+            android:padding="8dp"
+            android:layout_marginStart="8dp"/>
+
     </LinearLayout>
 
+    <Button
+        android:id="@+id/buttonMyFavorites"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Mis Favoritos"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/filterLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewCharacters"
+        android:id="@+id/recyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/filter_section"
+        app:layout_constraintTop_toBottomOf="@+id/buttonMyFavorites"
         tools:listitem="@layout/item_character" />
 
     <ProgressBar
@@ -132,6 +116,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/filter_section" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

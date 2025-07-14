@@ -6,10 +6,12 @@ import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.apprm.R
 import com.example.apprm.databinding.ViewCharactersBinding
 import com.example.apprm.module.apiService.ClientApi
@@ -18,6 +20,10 @@ import com.example.apprm.module.db.repository.CharacterRepository
 import com.example.apprm.module.ui.adapters.CharacterAdapter
 import com.example.apprm.module.viewModel.CharacterViewModel
 import kotlinx.coroutines.launch
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.BiometricManager
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors // Para el Executor
 
 class CharactersUI : AppCompatActivity() {
 
@@ -26,145 +32,215 @@ class CharactersUI : AppCompatActivity() {
     private lateinit var characterAdapter: CharacterAdapter // Adaptador para RecyclerView
     private lateinit var viewModel: CharacterViewModel
 
+    // Executor para BiometricPrompt
+    private lateinit var executor: Executor
+    private lateinit var biometricPrompt: BiometricPrompt
+    private lateinit var promptInfo: BiometricPrompt.PromptInfo
+
+
+    private var selectedStatus: String? = null
+    private var selectedSpecies: String? = null
+
     // Opciones para los Spinners (Status y Species)
     // Estas listas son estáticas para el ejemplo. En una app real, podrían venir de la API o ser más dinámicas.
     private val statusOptions = arrayOf("Any", "Alive", "Dead", "unknown")
     private val speciesOptions = arrayOf("Any", "Human", "Alien", "Poopybutthole", "Mythological Creature", "Humanoid", "Animal", "Robot", "Cronenberg", "Disease", "unknown")
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ViewCharactersBinding.inflate(layoutInflater) // Inflar el layout
         setContentView(binding.root) // Establecer la vista raíz
 
+        setupViewModel()
         setupRecyclerView()
-        setupSpinners() // Configurar los Spinners
-        setupListeners() // Configurar los listeners para botones
+        setupObservers()
+        setupAutoCompleteFilters()
+        setupSearchAndFavorites() // Renombré para incluir el botón de favoritos
 
-        // --- INICIALIZACIÓN DEL REPOSITORIO CON DAO ---
+        setupBiometrics() // Nuevo método para configurar la biometría
 
-        // 1. Obtener la instancia del ApiService (ya existente)
-        val apiService = ClientApi.apiService
-
-        // 2. Obtener la instancia del FavoriteCharacterDao de la base de datos Room
-        // Se usa applicationContext para evitar posibles memory leaks si usáramos 'this'
-        val favoriteCharacterDao = AppDatabase.getDatabase(applicationContext).favoriteCharacterDao()
-
-        // 3. Instanciar CharacterRepository pasando apiService y favoriteCharacterDao
-        val repository = CharacterRepository(apiService, favoriteCharacterDao)
-
-        // 4. Instanciar la Factory del ViewModel con el nuevo repositorio
-        val factory = CharacterFactory(repository)
-        viewModel = ViewModelProvider(this, factory).get(CharacterViewModel::class.java)
-        // --- FIN INICIALIZACIÓN DEL REPOSITORIO ---
-
-        observeViewModel() // Empieza a observar los LiveData del ViewModel
-
-        // *** NUEVO OnClickListener para el botón "Mis Favoritos" ***
-        binding.buttonMyFavorites.setOnClickListener {
-            val intent = Intent(this, FavoriteCharactersUI::class.java)
-            startActivity(intent)
+        // Cargar los caracteres iniciales
+        if (savedInstanceState == null) {
+            viewModel.fetchCharacters()
         }
-        // *** FIN NUEVO OnClickListener ***
+    }
+
+    private fun setupViewModel() {
+        val apiService = ClientApi.apiService
+        val database = AppDatabase.getDatabase(applicationContext)
+        val favoriteCharacterDao = database.favoriteCharacterDao()
+        val repository = CharacterRepository(apiService, favoriteCharacterDao)
+        val factory = CharacterFactory(repository)
+        viewModel = ViewModelProvider(this, factory)[CharacterViewModel::class.java]
     }
 
     private fun setupRecyclerView() {
-        // Pasa una lambda al adaptador para manejar el clic en el elemento
         characterAdapter = CharacterAdapter { character ->
-            // Cuando se hace clic en un personaje, iniciamos CharacterDetailActivity
             val intent = Intent(this, CharacterDetailUI::class.java).apply {
-                // Pasamos el ID del personaje a la nueva actividad
-                putExtra("CHARACTER_ID", character.id)
+                putExtra("character_id", character.id)
             }
             startActivity(intent)
         }
-        binding.recyclerViewCharacters.apply {
+        binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(this@CharactersUI)
             adapter = characterAdapter
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                    val visibleItemCount = layoutManager.childCount
+                    val totalItemCount = layoutManager.itemCount
+                    val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+
+                    if (!viewModel.isLoading.value!! && dy > 0) {
+                        val threshold = 5
+                        if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount - threshold
+                            && firstVisibleItemPosition >= 0) {
+                            viewModel.loadMoreCharacters()
+                        }
+                    }
+                }
+            })
         }
     }
 
-    private fun setupSpinners() {
-        // Adaptador para el Spinner de Estado
-        val statusAdapter = ArrayAdapter(this, R.layout.dropdown_menu_item, statusOptions)
-        binding.autoCompleteTextViewStatus.setAdapter(statusAdapter)
-        binding.autoCompleteTextViewStatus.setText(statusOptions[0], false) // "Any" por defecto
-
-        // Adaptador para el Spinner de Especie
-        val speciesAdapter = ArrayAdapter(this, R.layout.dropdown_menu_item, speciesOptions)
-        binding.autoCompleteTextViewSpecies.setAdapter(speciesAdapter)
-        binding.autoCompleteTextViewSpecies.setText(speciesOptions[0], false) // "Any" por defecto
-    }
-
-    private fun setupListeners() {
-        // *** AQUÍ ES DONDE APLICAMOS EL EVENTO ONCLICK AL BOTÓN "Aplicar Filtros" ***
-        binding.buttonApplyFilters.setOnClickListener {
-            applyFilters() // Llama a nuestra función para aplicar los filtros
-        }
-
-        // Evento OnClick para el botón "Limpiar Filtros"
-        binding.buttonClearFilters.setOnClickListener {
-            clearFilters() // Llama a nuestra función para limpiar los filtros
-        }
-
-        // Opcional: Para una barra de búsqueda más dinámica, podrías añadir un TextWatcher
-        // a editTextName y llamar a applyFilters() después de un pequeño retraso (debounce)
-        // para evitar llamadas excesivas a la API mientras el usuario escribe.
-        // Por ahora, solo se activa con el botón "Aplicar Filtros".
-    }
-
-    private fun applyFilters() {
-        // 1. Recopilar los valores de los campos de entrada de la UI
-        val nameFilter = binding.editTextName.text.toString().trim().takeIf { it.isNotEmpty() }
-        val statusFilter = binding.autoCompleteTextViewStatus.text.toString().takeIf { it != "Any" }
-        val speciesFilter = binding.autoCompleteTextViewSpecies.text.toString().takeIf { it != "Any" }
-
-        Log.d(TAG, "Aplicando filtros: Nombre='$nameFilter', Estado='$statusFilter', Especie='$speciesFilter'")
-
-        // 2. Llamar al ViewModel para que inicie la carga de datos con los filtros
-        viewModel.fetchCharacters(nameFilter, statusFilter, speciesFilter)
-
-        // Opcional: Cerrar el teclado después de aplicar filtros
-        // val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        // imm.hideSoftInputFromWindow(binding.root.windowToken, 0)
-    }
-
-    private fun clearFilters() {
-        // 1. Restablecer los campos de entrada en la UI
-        binding.editTextName.setText("")
-        binding.autoCompleteTextViewStatus.setText(statusOptions[0], false) // "Any"
-        binding.autoCompleteTextViewSpecies.setText(speciesOptions[0], false) // "Any"
-
-        // 2. Llamar al ViewModel para limpiar los filtros y cargar todos los personajes
-        viewModel.clearFiltersAndFetchAllCharacters()
-
-        Toast.makeText(this, "Filtros limpiados.", Toast.LENGTH_SHORT).show()
-        Log.d(TAG, "Filtros limpiados y recargando todos los personajes.")
-    }
-
-    private fun observeViewModel() {
-        // Observar la lista de personajes del ViewModel y actualizar el adaptador del RecyclerView
+    private fun setupObservers() {
         viewModel.characters.observe(this) { characters ->
             characterAdapter.submitList(characters)
-            Log.d(TAG, "UI actualizada con ${characters.size} personajes.")
-            if (characters.isEmpty() && viewModel.isLoading.value == false) {
-                // Mostrar un mensaje si no hay resultados y la carga ha terminado
-                Toast.makeText(this, "No se encontraron personajes con esos filtros.", Toast.LENGTH_LONG).show()
-            }
         }
 
-        // Observar el estado de carga y mostrar/ocultar el ProgressBar y el RecyclerView
         viewModel.isLoading.observe(this) { isLoading ->
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-            binding.recyclerViewCharacters.visibility = if (isLoading) View.GONE else View.VISIBLE
+            binding.progressBar.visibility = if (isLoading) android.view.View.VISIBLE else android.view.View.GONE
         }
 
-        // Observar mensajes de error y mostrarlos como un Toast
-        viewModel.errorMessage.observe(this) { errorMessage ->
-            errorMessage?.let {
+        viewModel.errorMessage.observe(this) { message ->
+            message?.let {
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                Log.e(TAG, "Error en la UI: $it")
+              //  viewModel.errorMessage.value = ""
             }
         }
+    }
+
+    // *** MÉTODO ACTUALIZADO PARA INCLUIR SEARCHVIEW Y BOTÓN DE FAVORITOS ***
+    private fun setupSearchAndFavorites() {
+        // --- Configuración de SearchView para el filtro de nombre ---
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                performSearchWithCurrentFilters(query)
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // Para búsqueda en tiempo real (con debounce en ViewModel)
+                performSearchWithCurrentFilters(newText)
+                return true
+            }
+        })
+
+        // --- Botón para Mis Favoritos ---
+        binding.buttonMyFavorites.setOnClickListener {
+            val intent = Intent(this, FavoriteCharactersUI::class.java) // Asume esta actividad
+            startActivity(intent)
+        }
+
+        // --- Botón para restablecer filtros ---
+        // *** CAMBIO AQUÍ: Ahora se inicia la autenticación biométrica ***
+        binding.buttonMyFavorites.setOnClickListener {
+            // Verificar si la biometría está disponible y si hay credenciales
+            val biometricManager = BiometricManager.from(this)
+            when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)) {
+                BiometricManager.BIOMETRIC_SUCCESS -> {
+                    // La biometría está disponible, iniciar el prompt
+                    biometricPrompt.authenticate(promptInfo)
+                }
+                BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
+                    Toast.makeText(this, "El dispositivo no tiene hardware biométrico.", Toast.LENGTH_SHORT).show()
+                }
+                BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
+                    Toast.makeText(this, "El hardware biométrico no está disponible.", Toast.LENGTH_SHORT).show()
+                }
+                BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                    // No hay huellas dactilares o credenciales faciales enrolladas
+                    Toast.makeText(this, "No hay datos biométricos configurados. Por favor, configura uno en los ajustes del dispositivo.", Toast.LENGTH_LONG).show()
+                    // Opcional: Redirigir al usuario a la configuración para enrolar biometría
+                    // val enrollIntent = Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
+                    //     putExtra(Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED, BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+                    // }
+                    // startActivity(enrollIntent)
+                }
+                else -> {
+                    Toast.makeText(this, "Error desconocido en la biometría.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    // *******************************************************************
+
+    private fun setupAutoCompleteFilters() {
+        // Adaptador para Estado
+        val statusAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, arrayOf("Todos") + statusOptions)
+        binding.autoCompleteTextViewStatus.setAdapter(statusAdapter)
+
+        binding.autoCompleteTextViewStatus.setOnItemClickListener { parent, view, position, id ->
+            val selectedOption = parent.getItemAtPosition(position).toString()
+            selectedStatus = if (selectedOption == "Todos") null else selectedOption
+            // Al seleccionar un filtro, aplicamos la búsqueda con el nombre actual
+            performSearchWithCurrentFilters(binding.searchView.query?.toString()) // Usar searchView.query
+        }
+
+        // Adaptador para Especie
+        val speciesAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, arrayOf("Todos") + speciesOptions)
+        binding.autoCompleteTextViewSpecies.setAdapter(speciesAdapter)
+
+        binding.autoCompleteTextViewSpecies.setOnItemClickListener { parent, view, position, id ->
+            val selectedOption = parent.getItemAtPosition(position).toString()
+            selectedSpecies = if (selectedOption == "Todos") null else selectedOption
+            // Al seleccionar un filtro, aplicamos la búsqueda con el nombre actual
+            performSearchWithCurrentFilters(binding.searchView.query?.toString()) // Usar searchView.query
+        }
+    }
+
+    // Helper para realizar la búsqueda/filtrado con los valores actuales de la UI
+    private fun performSearchWithCurrentFilters(nameQuery: String?) {
+        viewModel.searchCharacters(
+            nameQuery = nameQuery ?: "",
+            statusFilter = selectedStatus,
+            speciesFilter = selectedSpecies
+        )
+    }
+
+    private fun setupBiometrics() {
+        executor = Executors.newSingleThreadExecutor()
+
+        biometricPrompt = BiometricPrompt(this, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    Toast.makeText(applicationContext, "Error de autenticación: $errString", Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    // ¡Autenticación exitosa! Ahora puedes lanzar la actividad de favoritos
+                    runOnUiThread { // Asegurarse de ejecutar en el hilo principal para la UI
+                        val intent = Intent(this@CharactersUI, FavoriteCharactersUI::class.java)
+                        startActivity(intent)
+                        Toast.makeText(applicationContext, "Autenticación exitosa!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    Toast.makeText(applicationContext, "Autenticación fallida", Toast.LENGTH_SHORT).show()
+                }
+            })
+
+        promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Acceso a Favoritos")
+            .setSubtitle("Autentícate para ver tus personajes favoritos")
+            .setDescription("Coloca tu huella digital o usa la credencial de tu dispositivo.")
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+            // .setNegativeButtonText("Cancelar") // ¡Elimina esta línea!
+            .build()
     }
 }
