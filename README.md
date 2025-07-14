@@ -31,7 +31,7 @@
 
 1.  **Clona este repositorio** (o descarga el código fuente).
 2.  Abre el proyecto en **Android Studio**.
-3.  Asegúrate de haber configurado tu **clave de API de Google Maps** como se describe en la sección [Configuración del Proyecto](#configuración-del-proyecto).
+3.  Asegúrate de haber configurado tu **clave de API de Google Maps** 
 4.  **Sincroniza el proyecto** con los archivos Gradle (File > Sync Project with Gradle Files).
 5.  **Ejecuta la aplicación** en un emulador de Android (API 23 o superior, preferiblemente) o en un dispositivo físico.
     * Para la autenticación biométrica, asegúrate de que el emulador/dispositivo tenga una huella dactilar o un patrón/PIN configurado en la seguridad del dispositivo. Puedes configurar una huella dactilar virtual en un emulador yendo a `Extended Controls` (el botón de los tres puntos `...` en la barra lateral del emulador) -> `Fingerprint` -> `Touch the sensor` (varias veces para enrollar).
@@ -93,3 +93,13 @@ C
 │               ├── mipmap         // Iconos de la aplicación
 │               └── values         // Recursos de valores (cadenas, colores, estilos, temas)
 └── build.gradle.kts           // Configuración global de Gradle
+
+Views:
+![Screenshot_20250714_142647_AppRM](https://github.com/user-attachments/assets/6198b48a-8337-4c04-b0af-fe56cf465913)
+![Screenshot_20250714_142647_AppRM](https://github.com/user-attachments/assets/988689f2-246b-4d5a-8046-a947c4c7caf5)
+![Screenshot_20250714_142709_AppRM](https://github.com/user-attachments/assets/61dd1874-2ed3-4fb5-92a8-32ef54fa74aa)
+![Screenshot_20250714_142726_AppRM](https://github.com/user-attachments/assets/966a0a5c-62e9-479b-954a-ca001764bb7f)
+
+
+
+
